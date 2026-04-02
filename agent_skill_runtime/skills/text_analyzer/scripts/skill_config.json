@@ -1,0 +1,6 @@
+{
+  "max_keywords": 5,
+  "min_token_length": 2,
+  "warn_length": 200,
+  "log_level": "INFO"
+}

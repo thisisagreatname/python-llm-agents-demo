@@ -1,0 +1,5 @@
+{
+  "operation": "subtract",
+  "precision": 2,
+  "log_level": "INFO"
+}

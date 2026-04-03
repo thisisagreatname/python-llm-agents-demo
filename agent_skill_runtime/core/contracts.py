@@ -4,15 +4,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass(frozen=True)
-class SkillOverview:
-    name: str
-    title: str
-    description: str
-    functional_overview: str
-    skill_dir: Path
-
-
-@dataclass(frozen=True)
 class SkillBundle:
     name: str
     title: str
@@ -20,24 +11,6 @@ class SkillBundle:
     full_markdown: str
     functional_overview: str
     skill_dir: Path
-    scripts_dir: Path
-    metadata: Dict[str, Any]
-
-
-@dataclass(frozen=True)
-class SchedulerSkillCard:
-    name: str
-    title: str
-    description: str
-    functional_overview: str
-
-
-@dataclass(frozen=True)
-class ExecutorSkillPackage:
-    name: str
-    title: str
-    description: str
-    skill_markdown: str
     scripts_dir: Path
     metadata: Dict[str, Any]
 
@@ -64,4 +37,3 @@ class SkillRunEvent:
 class SkillRunResult:
     record: SkillRunRecord
     events: Tuple[SkillRunEvent, ...]
-

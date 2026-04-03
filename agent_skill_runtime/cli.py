@@ -62,8 +62,7 @@ def main() -> int:
     skills_root = repo_root / "agent_skill_runtime" / "skills"
 
     from agent_skill_runtime.core.console import print_event, render_scheduler_card
-    from agent_skill_runtime.core.disclosure import executor_view, scheduler_view
-    from agent_skill_runtime.core.llm_scheduler import choose_skill_with_llm
+    from agent_skill_runtime.core.llm_scheduler import choose_skill_with_llm, continue_after_tool_result, extract_final_text
     from agent_skill_runtime.core.registry import build_registry
     from agent_skill_runtime.core.runner import run_skill
 
@@ -73,7 +72,7 @@ def main() -> int:
 
     if args.command == "scheduler":
         skill_list = list(registry.all())
-        skills = [scheduler_view(skill) for skill in skill_list]
+        skills = skill_list
         if args.task:
             from llm_client import load_client_from_config
 
@@ -86,11 +85,13 @@ def main() -> int:
                         "skill_name": decision.skill_name,
                         "input_payload": decision.input_payload,
                         "rationale": decision.rationale,
+                        "source": decision.source,
+                        "tool_call_id": decision.tool_call_id,
                     },
                     ensure_ascii=False,
                 )
                 if args.json
-                else f'{decision.skill_name} | {decision.rationale}'
+                else f'{decision.skill_name} | {decision.source} | {decision.tool_call_id} | {decision.rationale}'
             )
             return 0
         if args.json:
@@ -120,7 +121,18 @@ def main() -> int:
         client = load_client_from_config(args.config)
         decision = choose_skill_with_llm(client=client, skills=skill_list, task=args.task, model=args.model)
         selected_skill = registry.get(decision.skill_name)
-        result = run_skill(skill=selected_skill, input_payload=decision.input_payload)
+        result = run_skill(
+            skill=selected_skill,
+            input_payload=decision.input_payload,
+            selected_by=decision.source,
+            task=args.task,
+        )
+        final_llm_response = continue_after_tool_result(
+            client=client,
+            decision=decision,
+            tool_result=result.record.result or {},
+            model=args.model,
+        )
         if not args.json:
             for event in result.events:
                 print_event(event)
@@ -128,9 +140,13 @@ def main() -> int:
             "task": args.task,
             "selected_skill": decision.skill_name,
             "scheduler_rationale": decision.rationale,
+            "scheduler_source": decision.source,
+            "tool_call_id": decision.tool_call_id,
             "command": result.record.command,
             "return_code": result.record.return_code,
             "result": result.record.result,
+            "final_llm_text": extract_final_text(final_llm_response),
+            "final_llm_response": final_llm_response if args.json else {},
             "stdout": result.record.stdout if args.json else "",
             "stderr": result.record.stderr if args.json else "",
             "event_count": len(result.events),
@@ -140,19 +156,18 @@ def main() -> int:
 
     skill = registry.get(args.skill)
     if args.command == "executor":
-        package = executor_view(skill)
         payload = {
-            "name": package.name,
-            "title": package.title,
-            "description": package.description,
-            "scripts_dir": str(package.scripts_dir),
-            "skill_markdown": package.skill_markdown,
-            "metadata": package.metadata,
+            "name": skill.name,
+            "title": skill.title,
+            "description": skill.description,
+            "scripts_dir": str(skill.scripts_dir),
+            "skill_markdown": skill.full_markdown,
+            "metadata": skill.metadata,
         }
-        print(json.dumps(payload, ensure_ascii=False) if args.json else package.skill_markdown)
+        print(json.dumps(payload, ensure_ascii=False) if args.json else skill.full_markdown)
         return 0
 
-    result = run_skill(skill=skill, input_payload=build_input_payload(args))
+    result = run_skill(skill=skill, input_payload=build_input_payload(args), selected_by="manual")
     if not args.json:
         for event in result.events:
             print_event(event)

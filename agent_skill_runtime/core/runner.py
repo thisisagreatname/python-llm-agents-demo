@@ -11,6 +11,8 @@ def run_skill(
     *,
     skill: SkillBundle,
     input_payload: Dict[str, object],
+    selected_by: str = "manual",
+    task: str = "",
     python_executable: Optional[str] = None,
 ) -> SkillRunResult:
     run_script = skill.scripts_dir / "run_skill.py"
@@ -36,7 +38,7 @@ def run_skill(
     stdout = completed.stdout or ""
     stderr = completed.stderr or ""
     result = _extract_result(stdout)
-    events = tuple(_parse_events(stdout, stderr, command, skill, completed.returncode))
+    events = tuple(_parse_events(stdout, stderr, command, skill, completed.returncode, selected_by, task))
     return SkillRunResult(
         record=SkillRunRecord(
             skill_name=skill.name,
@@ -56,13 +58,21 @@ def _parse_events(
     command: Sequence[str],
     skill: SkillBundle,
     return_code: int,
+    selected_by: str,
+    task: str,
 ) -> List[SkillRunEvent]:
     events: List[SkillRunEvent] = [
         SkillRunEvent(
             index=1,
-            phase="scheduler_selected",
-            message="调度器仅根据功能概述选择技能",
-            payload={"skill": skill.name, "title": skill.title, "functional_overview": skill.functional_overview},
+            phase="skill_selected",
+            message="已确定要执行的技能",
+            payload={
+                "skill": skill.name,
+                "title": skill.title,
+                "selected_by": selected_by,
+                "task": task,
+                "functional_overview": skill.functional_overview,
+            },
         ),
         SkillRunEvent(
             index=2,
@@ -139,4 +149,3 @@ def _extract_result(stdout: str) -> Optional[Dict[str, object]]:
             return payload
         return {"value": payload}
     return None
-

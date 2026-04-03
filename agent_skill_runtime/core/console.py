@@ -1,6 +1,6 @@
 import json
 
-from agent_skill_runtime.core.contracts import SchedulerSkillCard, SkillRunEvent
+from agent_skill_runtime.core.contracts import SkillBundle, SkillRunEvent
 
 
 def render_event(event: SkillRunEvent) -> str:
@@ -12,6 +12,5 @@ def print_event(event: SkillRunEvent) -> None:
     print(render_event(event))
 
 
-def render_scheduler_card(card: SchedulerSkillCard) -> str:
-    return f"{card.name} | {card.title} | {card.description} | {card.functional_overview}"
-
+def render_scheduler_card(skill: SkillBundle) -> str:
+    return f"{skill.name} | {skill.title} | {skill.description} | {skill.functional_overview}"

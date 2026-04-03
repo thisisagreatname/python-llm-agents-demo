@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from agent_skill_runtime.core.contracts import SkillBundle, SkillOverview
+from agent_skill_runtime.core.contracts import SkillBundle
 
 
 def discover_skill_bundles(skills_root: Path) -> List[SkillBundle]:
@@ -37,16 +37,6 @@ def load_skill_bundle(skill_dir: Path) -> SkillBundle:
         skill_dir=skill_dir,
         scripts_dir=skill_dir / "scripts",
         metadata=metadata,
-    )
-
-
-def to_scheduler_card(bundle: SkillBundle) -> SkillOverview:
-    return SkillOverview(
-        name=bundle.name,
-        title=bundle.title,
-        description=bundle.description,
-        functional_overview=bundle.functional_overview,
-        skill_dir=bundle.skill_dir,
     )
 
 
@@ -95,4 +85,3 @@ def _extract_section(markdown_body: str, heading: str) -> str:
         if capture:
             captured.append(line)
     return "\n".join(captured).strip()
-

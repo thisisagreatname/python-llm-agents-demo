@@ -25,5 +25,3 @@
 
 - `agent_skill_runtime/`：skills + function calling。
 
-## 如何运行
-每个实践都有自己的入口与说明。
